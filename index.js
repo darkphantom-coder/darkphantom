@@ -80,7 +80,7 @@ let font = await jimp.loadFont(jimp.FONT_SANS_32_BLACK) //We declare a 32px font
   welcome.print(font64, 265, 55, `Welcome ${member.user.username}`) //We print the new user's name with the 64px font
   welcome.print(bfont64, 265, 125, `To ${member.guild.name}`)
   welcome.print(font64, 265, 195, `There are now ${member.guild.memberCount} users`)
-  welcome.composite(avatar, 40, 55).write('Welcome2.png') //Put the avatar on the image and create the Welcome2.png bot
+  welcome.composite(avatar, 40, 55).write('Welcome2.jpg') //Put the avatar on the image and create the Welcome2.png bot
   try{
   member.guild.channels.get(wChan).send(``, { files: ["Welcome2.png"] }) //Send the image to the channel
   }catch(e){
