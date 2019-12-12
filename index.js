@@ -75,7 +75,7 @@ let font = await jimp.loadFont(jimp.FONT_SANS_32_BLACK) //We declare a 32px font
     avatar.resize(200, 200) //Resize it
     mask.resize(200, 200) //Resize the mask
     avatar.mask(mask) //Make the avatar circle
-    welcome.resize(1000, 350)
+    welcome.resize(1000, 300)
 	
   welcome.print(font64, 265, 55, `Welcome ${member.user.username}`) //We print the new user's name with the 64px font
   welcome.print(bfont64, 265, 125, `To ${member.guild.name}`)
