@@ -1,97 +1,72 @@
+const app = require("express")();
 
-const http = require('http');
-const express = require('express');
-const app = express();
+const http = require("http");
 app.get("/", (request, response) => {
-  console.log(Date.now() + " Ping Received");
+  console.log(Date.now() + "Ping Received");
   response.sendStatus(200);
 });
 app.listen(process.env.PORT);
 setInterval(() => {
-  http.get(`http://${process.env.PROJECT_DOMAIN}.glitch.me/`);
-}, 60000);
+  http.get(`http://${process.inv.PROJECT_DOMAIN}.glitch.me/`);
+}, 280000);
+// this is to keep alive your bot, just add it to uptime robot to ping it every 5 minutes
 
-const Discord = require("discord.js")
-const config = require("./config.json")
-const bot = new Discord.Client();
+const { Client, Collection, Util } = require("discord.js");
+const { config } = require("dotenv");
 const fs = require("fs");
-bot.commands = new Discord.Collection();
-const db = require("quick.db")
-var jimp = require('jimp');
+const { promptMessage } = require("./function.js");
+const Discord = require("discord.js");
+const { PREFIX, TOKEN, STATUS } = require("./config.js");
+const bot = new Discord.Client();
 
-fs.readdir("./commands/", (err, files) => {
+const client = new Client({
+  disableEveryone: true
+});
+//assest ke ander img h wo daalni h canvas h. w   image kahan dalni hai???
+client.commands = new Collection();
+client.aliases = new Collection();
 
-  if(err) console.log(err);
+client.categories = fs.readdirSync("./commands/");
 
-  let jsfile = files.filter(f => f.split(".").pop() === "js");
-  if(jsfile.length <= 0){
-    console.log("Couldn't find commands.");
-    return;
-  }
-
-jsfile.forEach((f, i) =>{
-  let props = require(`./commands/${f}`);
-  console.log(`Welcome Bot V1 loaded!`);
-  bot.commands.set(props.help.name, props);
+config({
+  path: __dirname + "/.env"
 });
 
+["command"].forEach(handler => {
+  require(`./handlers/${handler}`)(client);
 });
 
+client.on("ready", () => {
+  console.log(`Hi, ${client.user.username} is now online!`);
 
-bot.on("ready", () => {
-  console.log(bot.user.username + " is online.")
+  setInterval(() => {
+    client.user.setActivity(`${STATUS}`, { type: "Watching" });
+  }, 5000);
 });
 
-bot.on("message", async message => {
-  //a little bit of data parsing/general checks
+client.on("message", async message => {
+  if (message.author.bot) return;
+  if (!message.guild) return;
+  if (!message.content.startsWith(PREFIX)) return;
+  if (!message.member)
+    message.member = await message.guild.fetchMember(message);
+
+  const args = message.content
+    .slice(PREFIX.length)
+    .trim()
+    .split(/ +/g);
+  const cmd = args.shift().toLowerCase();
+
+  if (cmd.length === 0) return;
+
+  let command = client.commands.get(cmd);
+  if (!command) command = client.commands.get(client.aliases.get(cmd));
+
+  if (command) command.run(client, message, args);
+});
+
  
-  if(message.author.bot) return;
-  if(message.channel.type === 'dm') return;
-  let content = message.content.split(" ");
-  let command = content[0];
-  let args = content.slice(1);
-  let prefix = config.prefix;
-  if(!message.content.startsWith(prefix)) return;
-
-  //checks if message contains a command and runs it
-  let commandfile = bot.commands.get(command.slice(prefix.length));
-  if(commandfile) commandfile.run(bot,message,args);
-})
-bot.on('guildMemberAdd', async member => {
-	
-	let wChan = db.fetch(`${member.guild.id}`)
-	
-	if(wChan == null) return;
-	
-	if(!wChan) return;
-	
-let font = await jimp.loadFont(jimp.FONT_SANS_32_BLACK) //We declare a 32px font
-  let font64 = await jimp.loadFont(jimp.FONT_SANS_64_WHITE) //We declare a 64px font
-  let bfont64 = await jimp.loadFont(jimp.FONT_SANS_64_BLACK)
-  let mask = await jimp.read('https://i.imgur.com/552kzaW.png') //We load a mask for the avatar, so we can make it a circle instead of a shape
-  let welcome = await jimp.read('http://rovettidesign.com/wp-content/uploads/2011/07/clouds2.jpg') //We load the base image
-
-  jimp.read(member.user.displayAvatarURL).then(avatar => { //We take the user's avatar
-    avatar.resize(200, 200) //Resize it
-    mask.resize(200, 200) //Resize the mask
-    avatar.mask(mask) //Make the avatar circle
-    welcome.resize(1000, 300)
-	
-  welcome.print(font64, 265, 55, `Welcome ${member.user.username}`) //We print the new user's name with the 64px font
-  welcome.print(bfont64, 265, 125, `To ${member.guild.name}`)
-  welcome.print(font64, 265, 195, `There are now ${member.guild.memberCount} users`)
-  welcome.composite(avatar, 40, 55).write('Welcome2.png') //Put the avatar on the image and create the Welcome2.png bot
-  try{
-  member.guild.channels.get(wChan).send(``, { files: ["Welcome2.png"] }) //Send the image to the channel
-  }catch(e){
-	  // dont do anything if error occurs
-	  // if this occurs bot probably can't send images or messages
-  }
-  })
-
-	
-	
-})
 
 
-bot.login(config.token)
+client.login(TOKEN);
+//now make a new file namee config.js and put token pre and your bot status there
